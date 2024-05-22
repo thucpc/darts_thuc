@@ -32,11 +32,11 @@ class _ResidualBlock(nn.Module):
         hidden_size: int,
         dropout: float,
         use_layer_norm: bool,
-        activation: Type[nn.Module],
+        activation: Type[nn.Module] =nn.ReLU,
     ):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
-
+        
         # dense layer with ReLU activation with dropout
         self.dense = nn.Sequential(
             nn.Linear(input_dim, hidden_size),
