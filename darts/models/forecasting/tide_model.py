@@ -32,7 +32,7 @@ class _ResidualBlock(nn.Module):
         hidden_size: int,
         dropout: float,
         use_layer_norm: bool,
-        activation: Type[nn.Module],
+        activation=nn.ReLU,
     ):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
@@ -90,7 +90,7 @@ class _TideModule(PLMixedCovariatesModule):
         temporal_width_future: int,
         use_layer_norm: bool,
         dropout: float,
-        activation: Type[nn.Module],
+        activation=nn.ReLU,
         **kwargs,
     ):
         """Pytorch module implementing the TiDE architecture.
@@ -397,7 +397,7 @@ class TiDEModel(MixedCovariatesTorchModel):
         use_layer_norm: bool = False,
         dropout: float = 0.1,
         use_static_covariates: bool = True,
-        activation: Type[nn.Module] = nn.ReLU,
+        activation= nn.ReLU,
         **kwargs,
     ):
         """An implementation of the TiDE model, as presented in [1]_.
