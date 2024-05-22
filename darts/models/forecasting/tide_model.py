@@ -23,6 +23,26 @@ MixedCovariatesTrainTensorType = Tuple[
 
 logger = get_logger(__name__)
 
+class SwiGLU(nn.Module):
+    def __init__(self, input_dim=None, beta=1.0):
+        super().__init__()
+        self.input_dim = input_dim
+        if self.input_dim is not None:
+            self.linear1 = nn.Linear(self.input_dim, self.input_dim)
+            self.linear2 = nn.Linear(self.input_dim, self.input_dim)
+        else:
+            self.linear1 = None
+            self.linear2 = None
+        self.beta = nn.Parameter(torch.tensor(beta))  # Biến beta thành tham số có thể học
+
+    def forward(self, x):
+        if self.linear1 is None or self.linear2 is None:
+            self.linear1 = nn.Linear(x.size(-1), x.size(-1))
+            self.linear2 = nn.Linear(x.size(-1), x.size(-1))
+        return self.swish(self.linear1(x)) * self.linear2(x)
+
+    def swish(self, x):
+        return x * torch.sigmoid(self.beta * x)
 
 class _ResidualBlock(nn.Module):
     def __init__(
@@ -37,17 +57,14 @@ class _ResidualBlock(nn.Module):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
 
-        self.linear1=nn.Linear(input_dim, hidden_size)
-        self.linear2=nn.Linear(hidden_size, input_dim)
-        self.activation=activation(hidden_size,1)
-        self.dropout=MonteCarloDropout(dropout)
+
         # dense layer with ReLU activation with dropout
-        # self.dense = nn.Sequential(
-        #     nn.Linear(input_dim, hidden_size),
-        #     self.activation(hidden_size),
-        #     nn.Linear(hidden_size, output_dim),
-        #     MonteCarloDropout(dropout),
-        # )
+        self.dense = nn.Sequential(
+            nn.Linear(input_dim, hidden_size),
+            SwiGLU(hidden_size,1.0),
+            nn.Linear(hidden_size, output_dim),
+            MonteCarloDropout(dropout),
+        )
 
         # linear skip connection from input to output of self.dense
         self.skip = nn.Linear(input_dim, output_dim)
@@ -60,11 +77,7 @@ class _ResidualBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # residual connection
-        x1=self.linear1(x)
-        x1=self.activation(x1)
-        x1=self.linear2(x1)
-        x1=self.dropout(x1)
-        x = x1 + self.skip(x)
+        x = self.dense(x) + self.skip(x)
 
         # layer normalization
         if self.layer_norm is not None:
