@@ -3,7 +3,7 @@ Time-series Dense Encoder (TiDE)
 ------
 """
 
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable,Type
 
 import torch
 import torch.nn as nn
@@ -32,7 +32,7 @@ class _ResidualBlock(nn.Module):
         hidden_size: int,
         dropout: float,
         use_layer_norm: bool,
-        activation: None,
+        activation: Type[nn.Module],
     ):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
@@ -82,7 +82,7 @@ class _TideModule(PLMixedCovariatesModule):
         temporal_width_future: int,
         use_layer_norm: bool,
         dropout: float,
-        activation: Callable,
+        activation: Type[nn.Module],
         **kwargs,
     ):
         """Pytorch module implementing the TiDE architecture.
@@ -389,7 +389,7 @@ class TiDEModel(MixedCovariatesTorchModel):
         use_layer_norm: bool = False,
         dropout: float = 0.1,
         use_static_covariates: bool = True,
-        activation: Callable =nn.ReLU,
+        activation: Type[nn.Module],
         **kwargs,
     ):
         """An implementation of the TiDE model, as presented in [1]_.
