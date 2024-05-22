@@ -36,15 +36,18 @@ class _ResidualBlock(nn.Module):
     ):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
-        self.activation=activation
-        
+
+        self.linear1=nn.Linear(input_dim, hidden_size)
+        self.linear2=nn.Linear(hidden_size, input_dim)
+        self.activation=activation(hidden_size)
+        self.dropout=MonteCarloDropout(dropout)
         # dense layer with ReLU activation with dropout
-        self.dense = nn.Sequential(
-            nn.Linear(input_dim, hidden_size),
-            self.activation(hidden_size),
-            nn.Linear(hidden_size, output_dim),
-            MonteCarloDropout(dropout),
-        )
+        # self.dense = nn.Sequential(
+        #     nn.Linear(input_dim, hidden_size),
+        #     self.activation(hidden_size),
+        #     nn.Linear(hidden_size, output_dim),
+        #     MonteCarloDropout(dropout),
+        # )
 
         # linear skip connection from input to output of self.dense
         self.skip = nn.Linear(input_dim, output_dim)
@@ -57,7 +60,11 @@ class _ResidualBlock(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # residual connection
-        x = self.dense(x) + self.skip(x)
+        x1=self.linear1(x)
+        x1=self.activation(x1)
+        x1=self.linear2(x1)
+        x1=self.dropout(x1)
+        x = x1 + self.skip(x)
 
         # layer normalization
         if self.layer_norm is not None:
