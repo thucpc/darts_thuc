@@ -39,7 +39,7 @@ class _ResidualBlock(nn.Module):
 
         self.linear1=nn.Linear(input_dim, hidden_size)
         self.linear2=nn.Linear(hidden_size, input_dim)
-        self.activation=activation(hidden_size)
+        self.activation=activation(hidden_size,1)
         self.dropout=MonteCarloDropout(dropout)
         # dense layer with ReLU activation with dropout
         # self.dense = nn.Sequential(
