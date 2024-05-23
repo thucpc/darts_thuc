@@ -168,6 +168,7 @@ class TorchForecastingModel(GlobalForecastingModel, ABC):
         random_state: Optional[int] = None,
         pl_trainer_kwargs: Optional[dict] = None,
         show_warnings: bool = False,
+        monitor_checkpoint: str = "val_loss",
     ):
         """Pytorch Lightning (PL)-based Forecasting Model.
 
@@ -339,12 +340,15 @@ class TorchForecastingModel(GlobalForecastingModel, ABC):
             pass
 
         # save best epoch on val_loss and last epoch under 'darts_logs/model_name/checkpoints/'
+        if isinstance(monitor_checkpoint, tuple):
+            monitor_checkpoint = monitor_checkpoint[0]
+        self.monitor_checkpoint=monitor_checkpoint
         if save_checkpoints:
             checkpoint_callback = pl.callbacks.ModelCheckpoint(
                 dirpath=checkpoints_folder,
                 save_last=True,
-                monitor="val_loss",
-                filename="best-{epoch}-{val_loss:.5f}",
+                monitor=self.monitor_checkpoint,
+                filename="best-{epoch}-{" + self.monitor_checkpoint + ":.5f}",
             )
             checkpoint_callback.CHECKPOINT_NAME_LAST = "last-{epoch}"
         else:
