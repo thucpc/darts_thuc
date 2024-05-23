@@ -418,7 +418,7 @@ class TiDEModel(MixedCovariatesTorchModel):
         use_layer_norm: bool = False,
         dropout: float = 0.1,
         use_static_covariates: bool = True,
-        activation: str = "ReLU",
+        activation: Union[str, nn.Module] = SwiGLU,
         **kwargs,
     ):
         """An implementation of the TiDE model, as presented in [1]_.
