@@ -344,7 +344,7 @@ class TorchForecastingModel(GlobalForecastingModel, ABC):
                 dirpath=checkpoints_folder,
                 save_last=True,
                 monitor="val_loss",
-                filename="best-{epoch}-{val_loss:.2f}",
+                filename="best-{epoch}-{val_loss:.5f}",
             )
             checkpoint_callback.CHECKPOINT_NAME_LAST = "last-{epoch}"
         else:
