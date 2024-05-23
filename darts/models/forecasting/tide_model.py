@@ -2,7 +2,10 @@
 Time-series Dense Encoder (TiDE)
 ------
 """
-
+###########################################################################
+from darts.models.components import glu_variants, layer_norm_variants
+from darts.models.components.glu_variants import GLU_FFN
+###############################################################
 from typing import Optional, Tuple
 
 import torch
@@ -52,14 +55,17 @@ class _ResidualBlock(nn.Module):
         hidden_size: int,
         dropout: float,
         use_layer_norm: bool,
+        activation: str,
     ):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
 
+        ffn_cls = getattr(glu_variants, activation)
+        
         # dense layer with ReLU activation with dropout
         self.dense = nn.Sequential(
             nn.Linear(input_dim, hidden_size),
-            SwiGLU(hidden_size),
+            ffn_cls(hidden_size,hidden_size),
             nn.Linear(hidden_size, output_dim),
             MonteCarloDropout(dropout),
         )
@@ -101,6 +107,7 @@ class _TideModule(PLMixedCovariatesModule):
         temporal_width_future: int,
         use_layer_norm: bool,
         dropout: float,
+        activation: str,
         **kwargs,
     ):
         """Pytorch module implementing the TiDE architecture.
@@ -179,6 +186,7 @@ class _TideModule(PLMixedCovariatesModule):
                 hidden_size=hidden_size,
                 use_layer_norm=use_layer_norm,
                 dropout=dropout,
+                activation=activation,
             )
             past_covariates_flat_dim = self.input_chunk_length * temporal_width_past
         elif self.past_cov_dim:
@@ -197,6 +205,7 @@ class _TideModule(PLMixedCovariatesModule):
                 hidden_size=hidden_size,
                 use_layer_norm=use_layer_norm,
                 dropout=dropout,
+                activation=activation,
             )
             historical_future_covariates_flat_dim = (
                 self.input_chunk_length + self.output_chunk_length
@@ -223,6 +232,7 @@ class _TideModule(PLMixedCovariatesModule):
                 hidden_size=hidden_size,
                 use_layer_norm=use_layer_norm,
                 dropout=dropout,
+                activation=activation,
             ),
             *[
                 _ResidualBlock(
@@ -231,6 +241,7 @@ class _TideModule(PLMixedCovariatesModule):
                     hidden_size=hidden_size,
                     use_layer_norm=use_layer_norm,
                     dropout=dropout,
+                    activation=activation,
                 )
                 for _ in range(num_encoder_layers - 1)
             ],
@@ -244,6 +255,7 @@ class _TideModule(PLMixedCovariatesModule):
                     hidden_size=hidden_size,
                     use_layer_norm=use_layer_norm,
                     dropout=dropout,
+                    activation=activation,
                 )
                 for _ in range(num_decoder_layers - 1)
             ],
@@ -256,6 +268,7 @@ class _TideModule(PLMixedCovariatesModule):
                 hidden_size=hidden_size,
                 use_layer_norm=use_layer_norm,
                 dropout=dropout,
+                activation=activation,
             ),
         )
 
@@ -271,6 +284,7 @@ class _TideModule(PLMixedCovariatesModule):
             hidden_size=temporal_decoder_hidden,
             use_layer_norm=use_layer_norm,
             dropout=dropout,
+            activation=activation,
         )
 
         self.lookback_skip = nn.Linear(
@@ -399,6 +413,7 @@ class TiDEModel(MixedCovariatesTorchModel):
         use_layer_norm: bool = False,
         dropout: float = 0.1,
         use_static_covariates: bool = True,
+        activation: str = "ReLU",
         **kwargs,
     ):
         """An implementation of the TiDE model, as presented in [1]_.
@@ -652,6 +667,7 @@ class TiDEModel(MixedCovariatesTorchModel):
 
         self.use_layer_norm = use_layer_norm
         self.dropout = dropout
+        self.activation = activation,
 
     def _create_model(
         self, train_sample: MixedCovariatesTrainTensorType
@@ -716,6 +732,7 @@ class TiDEModel(MixedCovariatesTorchModel):
             temporal_decoder_hidden=self.temporal_decoder_hidden,
             use_layer_norm=self.use_layer_norm,
             dropout=self.dropout,
+            activation=self.activation,
             **self.pl_module_params,
         )
 
