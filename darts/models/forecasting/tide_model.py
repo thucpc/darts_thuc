@@ -59,8 +59,13 @@ class _ResidualBlock(nn.Module):
     ):
         """Pytorch module implementing the Residual Block from the TiDE paper."""
         super().__init__()
-
-        ffn_cls = getattr(glu_variants, activation)
+        if isinstance(activation, tuple):
+            activation = activation[0]
+            if isinstance(activation, str):
+                ffn_cls = getattr(glu_variants, activation)
+            else:
+                ffn_cls = activation
+        
         
         # dense layer with ReLU activation with dropout
         self.dense = nn.Sequential(
