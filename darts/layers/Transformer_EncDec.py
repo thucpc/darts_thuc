@@ -23,9 +23,23 @@ class ConvLayer(nn.Module):
         x = x.transpose(1, 2)
         return x
 
+class SwiGLU(nn.Module):
+    def __init__(self, d_model=None, input_dim=None, beta=1.0):
+        super().__init__()
+        self.input_dim = input_dim
+        self.d_model = d_model
+        self.linear1 = nn.LazyLinear(self.input_dim)
+        self.linear2 = nn.LazyLinear(self.input_dim)
+        self.beta = nn.Parameter(torch.tensor(beta))  # Biến beta thành tham số có thể học
+
+    def forward(self, x):
+        return self.swish(self.linear1(x)) * self.linear2(x)
+
+    def swish(self, x):
+        return x * torch.sigmoid(self.beta * x)
 
 class EncoderLayer(nn.Module):
-    def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
+    def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="SwiGLU", beta=1.0):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
         self.attention = attention
@@ -34,7 +48,8 @@ class EncoderLayer(nn.Module):
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
-        self.activation = F.relu if activation == "relu" else F.gelu
+        self.activation = self.swish if activation == "SwiGLU" else F.relu
+        self.beta = nn.Parameter(torch.tensor(beta))
 
     def forward(self, x, attn_mask=None, tau=None, delta=None):
         new_x, attn = self.attention(
@@ -45,10 +60,15 @@ class EncoderLayer(nn.Module):
         x = x + self.dropout(new_x)
 
         y = x = self.norm1(x)
-        y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
+        y = self.conv1(y.transpose(-1, 1))
+        y = self.activation(y)
+        y = self.dropout(y)
         y = self.dropout(self.conv2(y).transpose(-1, 1))
 
         return self.norm2(x + y), attn
+    
+    def swish(self, x):
+        return x * torch.sigmoid(self.beta * x)
 
 
 class Encoder(nn.Module):
