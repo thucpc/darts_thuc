@@ -395,7 +395,6 @@ class _iTransformerModel(PLPastCovariatesModule):
                     AttentionLayer(
                         FullAttention(False, self.factor, attention_dropout=self.dropout,
                                       output_attention=self.output_attention), self.d_model, self.nhead),
-                    self.input_dim,
                     self.d_model,
                     2*self.d_model,
                     dropout=self.dropout,
@@ -412,7 +411,7 @@ class _iTransformerModel(PLPastCovariatesModule):
         # Normalization from Non-stationary Transformer
         means = x_enc.mean(1, keepdim=True).detach()
         x_enc = x_enc - means
-        stdev = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
+        stdev = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-9)
         x_enc /= stdev
 
         _, _, N = x_enc.shape
