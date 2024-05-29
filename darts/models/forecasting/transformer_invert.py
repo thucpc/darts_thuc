@@ -395,7 +395,6 @@ class _iTransformerModel(PLPastCovariatesModule):
                     AttentionLayer(
                         FullAttention(False, self.factor, attention_dropout=self.dropout,
                                       output_attention=self.output_attention), self.d_model, self.nhead),
-                    self.input_dim,
                     self.d_model,
                     2*self.d_model,
                     dropout=self.dropout,
