@@ -38,7 +38,7 @@ class SwiGLU(nn.Module):
         return x * torch.sigmoid(self.beta * x)
 
 class EncoderLayer(nn.Module):
-    def __init__(self, attention,input_dim, d_model, d_ff=None, dropout=0.1, activation="SwiGLU"):
+    def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
         self.attention = attention
@@ -47,7 +47,7 @@ class EncoderLayer(nn.Module):
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
-        self.activation = SwiGLU(d_ff) if activation == "SwiGLU" else F.relu
+        self.activation = F.relu if activation == "relu" else F.gelu
 
     def forward(self, x, attn_mask=None, tau=None, delta=None):
         new_x, attn = self.attention(
@@ -56,15 +56,12 @@ class EncoderLayer(nn.Module):
             tau=tau, delta=delta
         )
         x = x + self.dropout(new_x)
+
         y = x = self.norm1(x)
-        
-        y = self.conv1(y.transpose(-1, 1))
-        y = self.activation(y.transpose(-1, 1)) 
-        y = self.dropout(y.transpose(-1, 1))
+        y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
         y = self.dropout(self.conv2(y).transpose(-1, 1))
 
         return self.norm2(x + y), attn
-    
 
 
 class Encoder(nn.Module):
