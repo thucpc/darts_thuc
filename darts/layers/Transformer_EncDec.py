@@ -38,14 +38,16 @@ class SwiGLU(nn.Module):
         return x * torch.sigmoid(self.beta * x)
 
 class EncoderLayer(nn.Module):
-    def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
+    def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu",norm=False):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
         self.attention = attention
         self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
         self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
+        self.norm=norm
+        if self.norm:
+            self.norm1 = nn.LayerNorm(d_model)
+            self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         self.activation = F.relu if activation == "relu" else F.gelu
 
@@ -56,12 +58,15 @@ class EncoderLayer(nn.Module):
             tau=tau, delta=delta
         )
         x = x + self.dropout(new_x)
-
-        y = x = self.norm1(x)
+        if self.norm:
+            x = self.norm1(x)
+        y = x
         y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
         y = self.dropout(self.conv2(y).transpose(-1, 1))
-
-        return self.norm2(x + y), attn
+        out = x+y
+        if self.norm:
+            out = self.norm2(out)
+        return out, attn
 
 
 class Encoder(nn.Module):

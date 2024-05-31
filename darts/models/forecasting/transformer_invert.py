@@ -401,7 +401,7 @@ class _iTransformerModel(PLPastCovariatesModule):
                     activation=self.activation
                 ) for l in range(self.num_encoder_layers)
             ],
-            norm_layer=torch.nn.LayerNorm(self.d_model)
+            norm_layer=None #torch.nn.LayerNorm(self.d_model)
         )
         # Decoder
         self.projection = nn.Linear(self.d_model, self.output_dim, bias=True)

@@ -12,6 +12,7 @@ class TFMProgressBar(TQDMProgressBar):
         enable_validation_bar: bool = True,
         enable_prediction_bar: bool = True,
         enable_train_bar_only: bool = False,
+        dynamic_ncols: bool = False,
         **kwargs,
     ):
         """Darts' Progress Bar for `TorchForecastingModels`.
@@ -52,6 +53,7 @@ class TFMProgressBar(TQDMProgressBar):
         self.enable_validation_bar = enable_validation_bar
         self.enable_prediction_bar = enable_prediction_bar
         self.enable_train_bar_only = enable_train_bar_only
+        self.dynamic_ncols = dynamic_ncols
 
     def init_sanity_tqdm(self) -> Tqdm:
         """Override this to customize the tqdm bar for the validation sanity run."""
@@ -60,7 +62,7 @@ class TFMProgressBar(TQDMProgressBar):
             position=(2 * self.process_position),
             disable=not self.enable_sanity_check_bar or self.enable_train_bar_only,
             leave=False,
-            dynamic_ncols=True,
+            dynamic_ncols=self.dynamic_ncols,
             file=sys.stdout,
         )
 
@@ -71,7 +73,7 @@ class TFMProgressBar(TQDMProgressBar):
             position=(2 * self.process_position),
             disable=not self.enable_prediction_bar or self.enable_train_bar_only,
             leave=True,
-            dynamic_ncols=True,
+            dynamic_ncols=self.dynamic_ncols,
             file=sys.stdout,
             smoothing=0,
         )
@@ -83,7 +85,7 @@ class TFMProgressBar(TQDMProgressBar):
             position=(2 * self.process_position),
             disable=not self.enable_train_bar,
             leave=True,
-            dynamic_ncols=True,
+            dynamic_ncols=self.dynamic_ncols,
             file=sys.stdout,
             smoothing=0,
         )
@@ -97,6 +99,6 @@ class TFMProgressBar(TQDMProgressBar):
             position=(2 * self.process_position + has_main_bar),
             disable=not self.enable_validation_bar or self.enable_train_bar_only,
             leave=not has_main_bar,
-            dynamic_ncols=True,
+            dynamic_ncols=self.dynamic_ncols,
             file=sys.stdout,
         )
