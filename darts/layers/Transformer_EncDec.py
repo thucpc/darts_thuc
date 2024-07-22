@@ -57,7 +57,8 @@ class EncoderLayer(nn.Module):
             attn_mask=attn_mask,
             tau=tau, delta=delta
         )
-        x = x + self.dropout(new_x)
+        # x = x + self.dropout(new_x)
+        x=new_x
         if self.norm:
             x = self.norm1(x)
         y = x

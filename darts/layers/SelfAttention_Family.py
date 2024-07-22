@@ -184,10 +184,10 @@ class AttentionLayer(nn.Module):
         d_values = d_values or (d_model // n_heads)
 
         self.inner_attention = attention
-        self.query_projection = nn.Linear(d_model, d_keys * n_heads)
-        self.key_projection = nn.Linear(d_model, d_keys * n_heads)
-        self.value_projection = nn.Linear(d_model, d_values * n_heads)
-        self.out_projection = nn.Linear(d_values * n_heads, d_model)
+        self.query_projection = nn.LazyLinear(d_keys * n_heads)
+        self.key_projection = nn.LazyLinear( d_keys * n_heads)
+        self.value_projection = nn.LazyLinear( d_values * n_heads)
+        self.out_projection = nn.LazyLinear( d_model)
         self.n_heads = n_heads
 
     def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
