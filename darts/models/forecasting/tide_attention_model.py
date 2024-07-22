@@ -274,14 +274,14 @@ class _TideModule(PLMixedCovariatesModule):
         self.encoders = Encoder(
             [
                 EncoderLayer(
-                    AttentionLayer(
+                AttentionLayer(
                     FullAttention(False, 1, attention_dropout=self.dropout,
-                                      output_attention=True), self.d_model, 8),
+                                    output_attention=True), self.d_model, self.d_model//8), 
                     self.d_model,
-                    2*self.d_model,
+                    self.d_model,
                     dropout=self.dropout,
                     activation="gelu"
-                ) for l in range(self.num_encoder_layers)
+                ) for l in range(self.num_encoder_layers - 1)
             ],
             norm_layer=None #torch.nn.LayerNorm(self.d_model)
         )
